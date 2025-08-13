@@ -12,12 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve React frontend
-app.use(express.static(path.join(__dirname, 'frontend/build')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
-});
-
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
@@ -35,7 +29,9 @@ mongoose.connect(MONGO_URI)
 // BASE_URL for short links
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-// API Routes
+// -------- API ROUTES -------- //
+
+// Shorten URL
 app.post('/api/shorten', async (req, res) => {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: "URL is required" });
@@ -50,10 +46,18 @@ app.post('/api/shorten', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
-    res.send('URL Shortener Backend is running!');
+// Admin Route: List all URLs
+app.get('/api/admin', async (req, res) => {
+    try {
+        const allUrls = await Url.find().sort({ createdAt: -1 });
+        res.json(allUrls);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
+// Redirect to original URL
 app.get('/:shortcode', async (req, res) => {
     try {
         const urlDoc = await Url.findOne({ shortCode: req.params.shortcode });
@@ -69,15 +73,10 @@ app.get('/:shortcode', async (req, res) => {
     }
 });
 
-// Admin Route: List all URLs
-app.get('/api/admin', async (req, res) => {
-    try {
-        const allUrls = await Url.find().sort({ createdAt: -1 });
-        res.json(allUrls);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
-    }
+// -------- FRONTEND ROUTE (CATCH-ALL) -------- //
+app.use(express.static(path.join(__dirname, 'frontend/build')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
 
 // Start server
