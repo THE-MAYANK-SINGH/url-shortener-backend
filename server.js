@@ -9,6 +9,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'frontend/build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+});
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
@@ -27,7 +33,6 @@ app.post('/api/shorten', async (req, res) => {
 app.get('/', (req, res) => {
   res.send('URL Shortener Backend is running!');
 });
-
 
 // Redirect to original URL
 app.get('/:shortcode', async (req, res) => {
