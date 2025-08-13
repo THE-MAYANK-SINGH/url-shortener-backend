@@ -24,6 +24,9 @@ app.post('/api/shorten', async (req, res) => {
     res.json({ shortUrl: `${process.env.BASE_URL}/${shortCode}` });
 });
 
+app.get('/', (req, res) => {
+  res.send('URL Shortener Backend is running!');
+});
 
 
 // Redirect to original URL
